@@ -1,0 +1,1596 @@
+{
+  "name": "Flujo FInal FINAL",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingreso",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2032,
+        592
+      ],
+      "id": "b6b635a3-1c0a-4d71-8cf0-c5064469506e",
+      "name": "Webhook-RecibirMensaje",
+      "webhookId": "63d7d182-6a7e-4db2-9586-5d449e2a0182"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        304
+      ],
+      "id": "28e24418-7e36-4385-929f-dd8fee707eae",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zkhO1REIX0jqG2y5",
+          "name": "Api Jhon 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b6cb8681-7115-4df0-8556-169b2a807697",
+              "leftValue": "={{ $json.output['acción'] }}",
+              "rightValue": "ingreso",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        112
+      ],
+      "id": "736db699-e249-46f2-8616-15cb7586bbfc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "gastos",
+          "mode": "list",
+          "cachedResultName": "gastos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.output.fecha }}",
+            "monto": "={{ $json.output.monto }}",
+            "descripcion": "={{ $json.output.concepto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "monto",
+              "displayName": "monto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        64,
+        208
+      ],
+      "id": "bb0a74fe-6bee-47e6-987c-d42a5d77c0ef",
+      "name": "Insertar Gasto",
+      "credentials": {
+        "postgres": {
+          "id": "ZYyTXq18aGRSOt1l",
+          "name": "Postgres MaluEventos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.data.message.conversation }} {{ $json.candidates[0].content.parts[0].text }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -432,
+        320
+      ],
+      "id": "7df41855-986d-418d-b695-cf6ad0a642b4",
+      "name": "Guardar Memoria",
+      "credentials": {
+        "postgres": {
+          "id": "ZYyTXq18aGRSOt1l",
+          "name": "Postgres MaluEventos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{ \"accion\":\"ingreso\",\n  \"fecha\":\"2025-10-27\",\n  \"monto\":150.5,\n  \"descripcion\":\"pago de matrícula\"}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        320
+      ],
+      "id": "4fdc1e07-5f3b-4412-9346-9710badc4500",
+      "name": "Estructura JSON"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8080/message/sendText/{{ $('Webhook-RecibirMensaje').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.apikey }}"
+            },
+            {
+              "name": "instance",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.instance }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.data.key.remoteJid }}"
+            },
+            {
+              "name": "text",
+              "value": "=Se registra correctamente el siguiente ingreso: \nFecha: {{ $json.fecha }}\nMonto: {{ $json.monto }}\nConcepto: {{ $json.descripcion }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        256,
+        16
+      ],
+      "id": "a643d8c7-2fc2-427f-94d8-67c89bcb8d9d",
+      "name": "Mensaje de confirmación Ingreso",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8080/message/sendText/{{ $('Webhook-RecibirMensaje').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.apikey }}"
+            },
+            {
+              "name": "instance",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.instance }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.data.key.remoteJid }}"
+            },
+            {
+              "name": "text",
+              "value": "=Se registra correctamente el siguiente gasto: \nFecha: {{ $json.fecha }}\nMonto: {{ $json.monto }}\nConcepto: {{ $json.descripcion }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        256,
+        208
+      ],
+      "id": "e2cc6094-91d8-49f2-871d-d9c739cc1eb9",
+      "name": "Mensaje de confirmación gasto",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "ingresos",
+          "mode": "list",
+          "cachedResultName": "ingresos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "descripcion": "={{ $json.output.concepto }}",
+            "monto": "={{ $json.output.monto }}",
+            "fecha": "={{ $json.output.fecha }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "monto",
+              "displayName": "monto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        64,
+        16
+      ],
+      "id": "73b15c94-84f9-497b-a450-4cfdafd8785b",
+      "name": "Insertar Ingreso",
+      "credentials": {
+        "postgres": {
+          "id": "ZYyTXq18aGRSOt1l",
+          "name": "Postgres MaluEventos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "body.data.message.base64",
+        "options": {
+          "fileName": "audio.mp3"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1488,
+        496
+      ],
+      "id": "d0a63e35-1027-43a0-aa52-107635a9f66c",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
+        },
+        "inputType": "binary",
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        496
+      ],
+      "id": "0416f672-2817-4d13-bb56-9b8537b0d541",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zkhO1REIX0jqG2y5",
+          "name": "Api Jhon 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "341dd640-12a9-4cd3-92fa-ed7a12af3977",
+                    "leftValue": "={{ $json.textoEntrada }}",
+                    "rightValue": "guardar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "guardar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "07f8069a-5094-428b-ac39-3b151eb6a239",
+                    "leftValue": "={{ $json.textoEntrada }}",
+                    "rightValue": "generar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "generar reporte"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -912,
+        592
+      ],
+      "id": "47b98182-a09c-4061-8880-c216d5fd60e0",
+      "name": "Switch",
+      "notesInFlow": false,
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e466618-19bd-452b-bf53-c02190eb89bf",
+              "leftValue": "={{ $json.body.data.messageType }}",
+              "rightValue": "audioMessage",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1696,
+        592
+      ],
+      "id": "ec139396-4618-40f3-a3cc-aba0e4d24333",
+      "name": "IF"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d470b257-2ff0-4865-865d-0915991dc19c",
+              "name": "textoEntrada",
+              "value": "={{\n  $if(\n    $(\"IF\").item.json.body?.data?.message?.audioMessage,\n    $(\"Transcribe a recording\").item.json.candidates[0].content.parts[0].text.trim().toLowerCase(),\n    $(\"IF\").item.json.body?.data?.message?.conversation.trim().toLowerCase()\n  )\n}}",
+              "type": "string"
+            },
+            {
+              "id": "81af5535-a241-415c-b3cb-7318297e018d",
+              "name": "__metrics.flow_start_ms",
+              "value": "={{ $('Metrica - Inicio etapa 1').item.json.__metrics.flow_start_ms }}",
+              "type": "number"
+            },
+            {
+              "id": "2b959b37-03c5-48c4-a6b9-4e438568af1a",
+              "name": "__metrics.flow_start_ts",
+              "value": "={{ $('Metrica - Inicio etapa 1').item.json.__metrics.flow_start_ts }}",
+              "type": "string"
+            },
+            {
+              "id": "934913f8-5408-4d32-bf25-96f4a5ce8142",
+              "name": "__metrics.stage_start_ms",
+              "value": "={{ $('Metrica - Inicio etapa 1').item.json.__metrics.stage_start_ms }}",
+              "type": "number"
+            },
+            {
+              "id": "da764a4e-0e47-41ec-9cc7-6bcf591a5dac",
+              "name": "__metrics.stage_name",
+              "value": "={{ $('Metrica - Inicio etapa 1').item.json.__metrics.stage_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1088,
+        608
+      ],
+      "id": "1d8e769a-acae-4ce4-96b0-a1e6bb5776d1",
+      "name": "Edit Fields",
+      "retryOnFail": false,
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function node (n8n) - Parse Report Request\n\nconst input = (items[0].json.textoEntrada || \"\")\n  .toString()\n  .trim()\n  .toLowerCase();\n\n// helpers\nconst monthNames = {\n  enero:0, febrero:1, marzo:2, abril:3, mayo:4, junio:5,\n  julio:6, agosto:7, septiembre:8, octubre:9, noviembre:10, diciembre:11\n};\n\nfunction pad(n){ return n < 10 ? '0' + n : '' + n; }\nfunction toISODate(d){\n  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;\n}\n\nconst now = new Date();\n\n// ===============================\n// 🧠 DETECCIÓN CORRECTA DEL AÑO\n// ===============================\nlet detectedYear = null;\n\n// 1️⃣ año explícito (2024, 2025, etc.)\nconst yearMatch = input.match(/\\b(20\\d{2})\\b/);\nif (yearMatch) {\n  detectedYear = parseInt(yearMatch[1], 10);\n}\n\n// 2️⃣ año pasado / anterior\nif (/año\\s+pasado|año\\s+anterior/.test(input)) {\n  detectedYear = now.getFullYear() - 1;\n}\n\n// 3️⃣ fallback\nconst defaultYear = detectedYear ?? now.getFullYear();\n\n// ===============================\n// VARIABLES\n// ===============================\nlet tipo = null;\nlet startDate = null;\nlet endDate = null;\nlet human = null;\n\n// ===============================\n// TIPO\n// ===============================\nif (/ingresos?|entradas/.test(input)) tipo = 'ingresos';\nif (/egresos?|gastos?|salidas/.test(input)) tipo = 'egresos';\nif (/ganancias?|utilidad|beneficio|resultado/.test(input)) tipo = 'ganancias';\n\n// ===============================\n// MES COMPLETO\n// ===============================\nif(!startDate){\n  let m = input.match(/\\b(?:mes\\s+de|en)\\s+([a-záéíóúñ]+)/i);\n  if(m){\n    const monthName = m[1]\n      .normalize('NFD')\n      .replace(/[\\u0300-\\u036f]/g, '');\n\n    const monthIndex = monthNames[monthName];\n\n    if(typeof monthIndex !== 'undefined'){\n      const s = new Date(defaultYear, monthIndex, 1);\n      const e = new Date(defaultYear, monthIndex + 1, 0);\n\n      startDate = toISODate(s);\n      endDate = toISODate(e);\n      human = `Mes de ${monthName} de ${defaultYear}`;\n    }\n  }\n}\n\n// ===============================\n// FALLBACK: HOY\n// ===============================\nif(!startDate){\n  startDate = toISODate(now);\n  endDate = toISODate(now);\n  human = 'Hoy';\n}\n\n// ===============================\n// SALIDA\n// ===============================\nreturn [{\n  json: {\n    original: input,\n    tipo,\n    startDate,\n    endDate,\n    human\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        688
+      ],
+      "id": "b41d3ed1-e730-4cfb-afec-344d41d7f93c",
+      "name": "Extrae datos del mensaje"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM {{$json[\"tipo\"] == \"ingresos\" ? \"ingresos\" : \"gastos\"}}\nWHERE \"fecha\" BETWEEN '{{$json[\"startDate\"]}}' AND '{{$json[\"endDate\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -16,
+        768
+      ],
+      "id": "bb23428d-1e88-418c-b093-31330e972271",
+      "name": "Realiza consulta en DB",
+      "credentials": {
+        "postgres": {
+          "id": "ZYyTXq18aGRSOt1l",
+          "name": "Postgres MaluEventos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 🔹 Datos que puedes cambiar o recibir de otro nodo\nconst empresa = \"MALUEVENTOS\";\nconst tipo = $('Extrae datos del mensaje').first().json.tipo; // o \"gastos\"\nconst periodo = $('Extrae datos del mensaje').first().json.human;\n\n// 🔹 Recibir los registros del nodo anterior (PostgreSQL)\nconst rows = items.map(item => item.json);\n\n// 🔹 Formatear fechas y calcular el total\nconst registros = rows.map(row => ({\n  fecha: new Date(row.fecha).toLocaleDateString(\"es-EC\"),\n  descripcion: row.descripcion,\n  monto: parseFloat(row.monto)\n}));\n\nconst total = registros.reduce((sum, r) => sum + r.monto, 0);\n\n// 🔹 Estructurar salida final\nreturn [\n  {\n    json: {\n      empresa,\n      tipo,\n      periodo,\n      registros,\n      total\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        768
+      ],
+      "id": "66d90e1e-a966-4d10-a044-f39f745c6c08",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1264
+      ],
+      "id": "58049f89-b03c-47a8-86bb-fa973db7802a",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fEfzJjPnXsF5hpqm",
+          "name": "API Jhon 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.data.message.conversation }} {{ $json.candidates[0].content.parts[0].text }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        1328
+      ],
+      "id": "5dc3e372-4bc6-4645-967a-01b97c52a9ba",
+      "name": "Guardar Memoria2",
+      "credentials": {
+        "postgres": {
+          "id": "ZYyTXq18aGRSOt1l",
+          "name": "Postgres MaluEventos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un asistente de la empresa MALUEVENTOS. \nCuando el usuario envíe un mensaje que no comience con las palabras “guardar” o “generar”, \nrespóndele educadamente recordándole la forma correcta de usar los comandos.\n\nEjemplo de respuesta:\n\"Recuerda que para registrar un gasto o ingreso debes comenzar diciendo 'guardar', \ny para generar un reporte debes iniciar con la palabra 'generar'.\"\n\nMensaje recibido: {{ $json.textoEntrada }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -128,
+        1088
+      ],
+      "id": "fffdcbc8-b982-41a5-b2ce-3d92b1fe3065",
+      "name": "Agente Recordatorio"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "66f5d126-87dd-43b2-8624-24e688ef4151",
+              "leftValue": "={{ $json.tipo }}",
+              "rightValue": "ganancias",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        688
+      ],
+      "id": "110b4f12-c79e-4fae-ae01-950b752c2ee2",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  'ingresos' AS tipo,\n  fecha,\n  descripcion,\n  monto\nFROM ingresos\nWHERE fecha BETWEEN '{{$json[\"startDate\"]}}' AND '{{$json[\"endDate\"]}}'\n\nUNION ALL\n\nSELECT \n  'gastos' AS tipo,\n  fecha,\n  descripcion,\n  monto\nFROM gastos\nWHERE fecha BETWEEN '{{$json[\"startDate\"]}}' AND '{{$json[\"endDate\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -16,
+        608
+      ],
+      "id": "ac9b964d-8145-4464-90d6-6de2cbf3c902",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "ZYyTXq18aGRSOt1l",
+          "name": "Postgres MaluEventos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Datos fijos\nconst empresa = \"MALUEVENTOS\";\nconst tipo = $('Extrae datos del mensaje').first().json.tipo; \nconst periodo = $('Extrae datos del mensaje').first().json.human;\n// Obtener filas de la consulta SQL (UNION ALL)\nconst rows = items.map(i => i.json);\n// Formateo estándar\nfunction formatRow(row){\n  return {\n    fecha: new Date(row.fecha).toLocaleDateString(\"es-EC\"),\n    descripcion: row.descripcion,\n    monto: parseFloat(row.monto)\n  };\n}\n// Separar según el tipo devuelto por SQL\nconst registrosIngresos = rows\n  .filter(r => r.tipo === \"ingresos\")\n  .map(formatRow);\n\nconst registrosGastos = rows\n  .filter(r => r.tipo === \"gastos\")\n  .map(formatRow);\n// Totales\nconst totalIngresos = registrosIngresos.reduce((s, r) => s + r.monto, 0);\nconst totalGastos = registrosGastos.reduce((s, r) => s + r.monto, 0);\n// Ganancias\nconst totalGanancias = totalIngresos - totalGastos;\n// Salida final\nreturn [\n  {\n    json: {\n      empresa,\n      tipo,\n      periodo,\n      registros_ingresos: registrosIngresos,\n      total_ingresos: totalIngresos,\n      registros_gastos: registrosGastos,\n      total_gastos: totalGastos,\n      total_ganancias: totalGanancias\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        608
+      ],
+      "id": "7072cf53-ff3c-46a5-9768-ac73e0f807b7",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "document": "0qPnmfG4M1LzGqoJSXzd",
+        "dataSource": "input"
+      },
+      "type": "n8n-nodes-documentero.documentero",
+      "typeVersion": 1,
+      "position": [
+        336,
+        608
+      ],
+      "id": "21cfc856-ee46-4422-9b34-64505443f5fd",
+      "name": "Documentero",
+      "credentials": {
+        "documenteroApi": {
+          "id": "CTxVMOLklr7SBdya",
+          "name": "Documentero account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "document": "miUnCVD1Ja5iqtMe05Rz",
+        "dataSource": "input"
+      },
+      "type": "n8n-nodes-documentero.documentero",
+      "typeVersion": 1,
+      "position": [
+        336,
+        768
+      ],
+      "id": "a9ab7da6-619e-4f48-bb35-670a3cac5f7c",
+      "name": "Documentero1",
+      "credentials": {
+        "documenteroApi": {
+          "id": "CTxVMOLklr7SBdya",
+          "name": "Documentero account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const nowMs = Date.now();\nconst nowTs = new Date().toISOString();\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    __metrics: {\n      ...(item.json.__metrics || {}),\n\n      // 🔹 Inicio del flujo completo\n      flow_start_ms: nowMs,\n      flow_start_ts: nowTs,\n\n      // 🔹 Inicio de la etapa 1\n      stage_start_ms: nowMs,\n      stage_name: \"Etapa_1\"\n    }\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1856,
+        592
+      ],
+      "id": "bfdf441a-8bce-4176-9fd7-42a36165ab35",
+      "name": "Metrica - Inicio etapa 1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const end = Date.now();\n\nreturn items.map(item => {\n  const start = item.json?.__metrics?.stage_start_ms;\n\n  // Si por algún motivo no existe start, evita romper el flujo\n  const durationMs = (typeof start === \"number\") ? (end - start) : null;\n\n  return {\n    json: {\n      execution_id: $execution.id,\n      workflow_name: $workflow.name,\n      stage: item.json?.__metrics?.stage_name || \"Etapa_1\",\n      duration_ms: durationMs,\n      extra: {\n        // guarda cualquier cosa útil para depurar\n        hasAudio: !!item.json?.data,\n        source: item.json?.body?.data?.key?.remoteJid || null,\n      },\n      // conserva el payload original por si lo necesitas después\n      original: item.json,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        880
+      ],
+      "id": "2b18ad93-fd47-4714-bfc4-bdceb465b480",
+      "name": "Metrica - Fin etapa 1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_stage_metrics (execution_id, workflow_name, stage, duration_ms, extra)\nVALUES ($1, $2, $3, $4, $5::jsonb);",
+        "options": {
+          "queryReplacement": "={{$json.execution_id}}  {{$json.workflow_name}}  {{$json.stage}}  {{$json.duration_ms}}  {{ JSON.stringify($json.extra || {}) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -704,
+        1088
+      ],
+      "id": "7f83221c-b884-46e1-9109-3a83a2685473",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "tvutXxVXQmyIkweg",
+          "name": "Postgres N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Guarda el tiempo de inicio de la etapa (2)\nconst now = Date.now();\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    __metrics: {\n      ...(item.json.__metrics || {}),\n      stage_start_ms: now,\n      stage_name: \"Etapa_2\",\n    },\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        -96
+      ],
+      "id": "cf71635a-f614-4cb3-991b-1bf681fc7056",
+      "name": "Metrica - Inicio etapa 2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extrae un JSON con las claves: fecha (YYYY-MM-DD), acción (ingreso o gasto), concepto (texto) y monto (número).\nFrase: {{ $json.textoEntrada }}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        112
+      ],
+      "id": "184d9295-15a1-4c15-85c3-da53784befe2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_stage_metrics (execution_id, workflow_name, stage, duration_ms, extra)\nVALUES ($1, $2, $3, NULLIF($4,'null')::bigint, $5::jsonb);",
+        "options": {
+          "queryReplacement": "={{$json.execution_id}}  {{$json.workflow_name}}  {{$json.stage}}  {{$json.duration_ms}}  {{ JSON.stringify($json.extra || {}) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        880,
+        -80
+      ],
+      "id": "0c5d9c81-299c-4eec-b629-76a14be17b06",
+      "name": "Execute a SQL query3",
+      "credentials": {
+        "postgres": {
+          "id": "tvutXxVXQmyIkweg",
+          "name": "Postgres N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        560,
+        512
+      ],
+      "id": "c8ed9147-df36-49f1-bd74-d4a226ce0624",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_stage_metrics (execution_id, workflow_name, stage, duration_ms, extra)\nVALUES ($1, $2, $3, NULLIF($4,'null')::bigint, $5::jsonb);",
+        "options": {
+          "queryReplacement": "={{$json.execution_id}}  {{$json.workflow_name}}  {{$json.stage}}  {{$json.duration_ms}}  {{ JSON.stringify($json.extra || {}) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        896,
+        512
+      ],
+      "id": "183ef008-ce88-4157-b28a-17acdc85b67e",
+      "name": "Execute a SQL query4",
+      "credentials": {
+        "postgres": {
+          "id": "tvutXxVXQmyIkweg",
+          "name": "Postgres N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        432,
+        992
+      ],
+      "id": "e870b324-d1a1-4d47-8a9d-b91c633037ff",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_stage_metrics (execution_id, workflow_name, stage, duration_ms, extra)\nVALUES ($1, $2, $3, NULLIF($4,'null')::bigint, $5::jsonb);",
+        "options": {
+          "queryReplacement": "={{$json.execution_id}}  {{$json.workflow_name}}  {{$json.stage}}  {{$json.duration_ms}}  {{ JSON.stringify($json.extra || {}) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        816,
+        992
+      ],
+      "id": "8e9a92df-ff33-45ce-b33d-138aa9e4fc66",
+      "name": "Execute a SQL query5",
+      "credentials": {
+        "postgres": {
+          "id": "tvutXxVXQmyIkweg",
+          "name": "Postgres N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        528,
+        -80
+      ],
+      "id": "c2902420-e218-434b-857a-f2dc193bc053",
+      "name": "Merge1",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const end = Date.now();\nreturn items.map(item => {\n  const start = item.json?.__metrics?.stage_start_ms;\n  // Si por algún motivo no existe start, evita romper el flujo\n  const durationMs = (typeof start === \"number\") ? (end - start) : null;\n  return {\n    json: {\n      execution_id: $execution.id,\n      workflow_name: $workflow.name,\n      stage: item.json?.__metrics?.stage_name || \"Etapa_2\",\n      duration_ms: durationMs,\n      extra: {\n        // guarda cualquier cosa útil para depurar\n        hasAudio: !!item.json?.data,\n        source: item.json?.body?.data?.key?.remoteJid || \"null\",\n      },\n      // conserva el payload original por si lo necesitas después\n      original: item.json,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        -80
+      ],
+      "id": "e3e8f6c8-4027-4bcc-b00f-cb1061868c38",
+      "name": "Metrica - Fin etapa 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Guarda el tiempo de inicio de la etapa (Webhook -> Switch)\nconst now = Date.now();\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    __metrics: {\n      ...(item.json.__metrics || {}),\n      stage_start_ms: now,\n      stage_name: \"Etapa_3\",\n    },\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        496
+      ],
+      "id": "6e0206e2-aec8-45ee-9341-e6e65867d01e",
+      "name": "Metrica - Inicio etapa 3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const end = Date.now();\n\nreturn items.map(item => {\n  const start = item.json?.__metrics?.stage_start_ms;\n\n  // Si por algún motivo no existe start, evita romper el flujo\n  const durationMs = (typeof start === \"number\") ? (end - start) : null;\n\n  return {\n    json: {\n      execution_id: $execution.id,\n      workflow_name: $workflow.name,\n      stage: item.json?.__metrics?.stage_name || \"Etapa_3\",\n      duration_ms: durationMs,\n      extra: {\n        // guarda cualquier cosa útil para depurar\n        hasAudio: !!item.json?.data,\n        source: item.json?.body?.data?.key?.remoteJid || \"null\",\n      },\n      // conserva el payload original por si lo necesitas después\n      original: item.json,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        512
+      ],
+      "id": "22b4c4e1-815a-4227-95b1-030b166865a3",
+      "name": "Metrica - Fin etapa 3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Guarda el tiempo de inicio de la etapa (Webhook -> Switch)\nconst now = Date.now();\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    __metrics: {\n      ...(item.json.__metrics || {}),\n      stage_start_ms: now,\n      stage_name: \"Etapa_4\",\n    },\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        976
+      ],
+      "id": "0308af8d-dab6-471e-974a-50bbd10dc434",
+      "name": "Metrica - Inicio etapa 4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const end = Date.now();\n\nreturn items.map(item => {\n  const start = item.json?.__metrics?.stage_start_ms;\n\n  // Si por algún motivo no existe start, evita romper el flujo\n  const durationMs = (typeof start === \"number\") ? (end - start) : null;\n\n  return {\n    json: {\n      execution_id: $execution.id,\n      workflow_name: $workflow.name,\n      stage: item.json?.__metrics?.stage_name || \"Etapa_4\",\n      duration_ms: durationMs,\n      extra: {\n        // guarda cualquier cosa útil para depurar\n        hasAudio: !!item.json?.data,\n        source: item.json?.body?.data?.key?.remoteJid || \"null\",\n      },\n      // conserva el payload original por si lo necesitas después\n      original: item.json,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        992
+      ],
+      "id": "6c2de3ef-74c9-47ca-b68f-8fbf57ea653d",
+      "name": "Metrica - Fin etapa 4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8080/message/sendText/{{ $('Webhook-RecibirMensaje').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.apikey }}"
+            },
+            {
+              "name": "instance",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.instance }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Webhook-RecibirMensaje').item.json.body.data.key.remoteJid }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        176,
+        1088
+      ],
+      "id": "cbad5afd-7ca9-4529-8c08-4d65997326ee",
+      "name": "Mensaje de correcion"
+    }
+  ],
+  "pinData": {
+    "Webhook-RecibirMensaje": [
+      {
+        "json": {
+          "headers": {
+            "content-type": "application/json",
+            "user-agent": "axios/1.7.7",
+            "content-length": "977",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "host": "host.docker.internal:5678",
+            "connection": "keep-alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event": "messages.upsert",
+            "instance": "Chip Automatizacion",
+            "data": {
+              "key": {
+                "remoteJid": "593968482295@s.whatsapp.net",
+                "fromMe": false,
+                "id": "3EB04EC7172F5E3F230DC5"
+              },
+              "pushName": "Jhon Henao 🤓🖥️",
+              "message": {
+                "conversation": "Generar un reporte de ganancias del mes de Noviembre del 2025",
+                "messageContextInfo": {
+                  "deviceListMetadata": {
+                    "senderKeyHash": "UqET+htCPHANxA==",
+                    "senderTimestamp": "1770603735",
+                    "senderAccountType": "E2EE",
+                    "receiverAccountType": "E2EE",
+                    "recipientKeyHash": "tJrL4rLfzjF9CA==",
+                    "recipientTimestamp": "1769037560"
+                  },
+                  "deviceListMetadataVersion": 2,
+                  "messageSecret": "fb/qBHeYNnGvSBhokFOFYHtb8qVAghL119zzhp4y2qA="
+                }
+              },
+              "messageType": "conversation",
+              "messageTimestamp": 1770909068,
+              "instanceId": "03afe6dd-0fda-4ddd-b38a-afef821fc6b7",
+              "source": "web"
+            },
+            "destination": "http://host.docker.internal:5678/webhook/ingreso",
+            "date_time": "2026-02-12T12:11:05.345Z",
+            "sender": "593959091014@s.whatsapp.net",
+            "server_url": "http://localhost:8080",
+            "apikey": "ECB698A0F405-4A29-BFE1-1AC55093718A"
+          },
+          "webhookUrl": "http://host.docker.internal:5678/webhook/ingreso",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook-RecibirMensaje": {
+      "main": [
+        [
+          {
+            "node": "Metrica - Inicio etapa 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Insertar Ingreso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insertar Gasto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Memoria": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estructura JSON": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar Ingreso": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de confirmación Ingreso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar Gasto": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de confirmación gasto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Metrica - Fin etapa 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Metrica - Inicio etapa 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Metrica - Fin etapa 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Metrica - Inicio etapa 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Metrica - Fin etapa 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Metrica - Inicio etapa 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrae datos del mensaje": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Realiza consulta en DB": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Documentero1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Recordatorio",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Memoria2": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Recordatorio",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de correcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Realiza consulta en DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Documentero",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Documentero1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Metrica - Fin etapa 1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Inicio etapa 1": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Inicio etapa 2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje de confirmación Ingreso": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Mensaje de confirmación gasto": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Documentero": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Metrica - Fin etapa 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Metrica - Fin etapa 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Metrica - Fin etapa 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Fin etapa 2": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Inicio etapa 3": {
+      "main": [
+        [
+          {
+            "node": "Extrae datos del mensaje",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Fin etapa 3": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Inicio etapa 4": {
+      "main": [
+        [
+          {
+            "node": "Agente Recordatorio",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metrica - Fin etapa 4": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje de correcion": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6579aefa-066d-4dbb-b76d-90542218a41f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3845751843ad5db0e35e3760a713f322301e6e9efd5c5d64417155cd2c6c162f"
+  },
+  "id": "_6oP8hKINql-8eV3_N8_r",
+  "tags": []
+}
