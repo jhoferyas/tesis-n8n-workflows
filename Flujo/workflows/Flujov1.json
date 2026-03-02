@@ -1,0 +1,361 @@
+{
+  "name": "Flujo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingreso",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -992,
+        -240
+      ],
+      "id": "ef89b1f1-c093-4053-8867-58c1dc4fe4d2",
+      "name": "Webhook-RecibirMensaje",
+      "webhookId": "63d7d182-6a7e-4db2-9586-5d449e2a0182"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        48
+      ],
+      "id": "2bebabef-afd2-4fa6-ac10-34da4aa3d394",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7UetNkjmHOWOkFAJ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{ \"accion\":\"ingreso\",\n  \"fecha\":\"2025-10-27\",\n  \"monto\":150.5,\n  \"descripcion\":\"pago de matrícula\"}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        16
+      ],
+      "id": "acb1dd83-d57e-4833-8689-efefbedad205",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extrae un JSON con las claves: accion (ingreso o gasto), fecha (YYYY-MM-DD), monto (número) y concepto (texto). Frase: {{ $json.body.data.message.conversation }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        -256
+      ],
+      "id": "378951ac-94c9-4bed-b669-92aa44ada59a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.data.message.conversation }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -576,
+        48
+      ],
+      "id": "63498772-2872-48bf-98c3-e47eae812822",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "5uTzi4ZF7BjTE4y0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b6cb8681-7115-4df0-8556-169b2a807697",
+              "leftValue": "={{ $json.output.accion }}",
+              "rightValue": "ingreso",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        -256
+      ],
+      "id": "d10e4306-89a5-40c3-93e5-a37742334b61",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "ingresos",
+          "mode": "list",
+          "cachedResultName": "ingresos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $json.output.fecha }}",
+            "Descripcion": "={{ $json.output.concepto }}",
+            "Monto": "={{ $json.output.monto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Monto",
+              "displayName": "Monto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        16,
+        -448
+      ],
+      "id": "1835d19a-7307-41e1-92d0-c5f2bcccddb7",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "5uTzi4ZF7BjTE4y0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "gastos",
+          "mode": "list",
+          "cachedResultName": "gastos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.output.fecha }}",
+            "motivo": "={{ $json.output.concepto }}",
+            "monto": "={{ $json.output.monto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monto",
+              "displayName": "monto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        -160
+      ],
+      "id": "f3fa78fb-fa9d-4a3f-b482-d01af24e2698",
+      "name": "Insert rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "5uTzi4ZF7BjTE4y0",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook-RecibirMensaje": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        []
+      ]
+    },
+    "Insert rows in a table1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4e704af0-bd4b-4bc9-9741-d78319a3fd6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d3a22a403aa2fc51092611022c6f6c5752bf92fe9c22e7435cd7e586774f392d"
+  },
+  "id": "vQOJt2hzKewEn6iR",
+  "tags": []
+}
