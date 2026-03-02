@@ -1,0 +1,641 @@
+{
+  "name": "Dashboard Finanzas (HTML + Postgres) - UI + API",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "WebhookDashboard",
+      "name": "WEBHOOK - Dashboard HTML",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "html",
+              "value": "<!doctype html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n  <title>Dashboard de Finanzas</title>\n  <style>\n    :root{\n      --bg:#f5f7fb; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;\n      --blue:#2563eb; --red:#ef4444; --green:#16a34a; --shadow: 0 8px 24px rgba(15,23,42,.08);\n      --radius:14px;\n    }\n    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}\n    body{margin:0;background:var(--bg);color:var(--text);}\n    .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;}\n    aside{background:#0b1220;color:#e2e8f0;padding:18px;position:sticky;top:0;height:100vh}\n    .brand{display:flex;gap:10px;align-items:center;margin-bottom:18px}\n    .dot{width:12px;height:12px;border-radius:4px;background:linear-gradient(135deg,#22c55e,#3b82f6)}\n    .brand h1{font-size:16px;margin:0}\n    .panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;margin-bottom:12px}\n    label{font-size:12px;color:#cbd5e1;display:block;margin-bottom:6px}\n    input,select,button{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);outline:none}\n    input,select{background:#fff;color:#111827}\n    button{cursor:pointer;background:var(--blue);color:#fff;border:none;font-weight:600}\n    button.secondary{background:#111827}\n    button.ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:#e2e8f0}\n    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}\n    main{padding:22px;max-width:1200px;margin:0 auto;width:100%}\n    .top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}\n    .top h2{margin:0;font-size:20px}\n    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:14px 0}\n    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;border:1px solid rgba(15,23,42,.06)}\n    .card small{color:var(--muted);display:block;margin-bottom:6px}\n    .card b{font-size:22px}\n    .tableWrap{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(15,23,42,.06);overflow:hidden}\n    table{width:100%;border-collapse:collapse}\n    th,td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px}\n    th{color:var(--muted);text-align:left;background:#fafafa}\n    tr:hover td{background:#fcfcff}\n    .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600}\n    .badge.in{background:rgba(37,99,235,.12);color:#1d4ed8;border:1px solid rgba(37,99,235,.25)}\n    .badge.out{background:rgba(239,68,68,.10);color:#b91c1c;border:1px solid rgba(239,68,68,.22)}\n    .actions{display:flex;gap:8px}\n    .btn{padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600}\n    .btn.danger{border-color:rgba(239,68,68,.3);color:#b91c1c}\n    .right{text-align:right}\n    .muted{color:var(--muted)}\n    .toast{position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;box-shadow:var(--shadow);display:none}\n    .modalBack{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px}\n    .modal{background:#fff;border-radius:16px;box-shadow:var(--shadow);max-width:520px;width:100%;padding:16px;border:1px solid rgba(15,23,42,.08)}\n    .modal h3{margin:0 0 10px 0}\n    .modal .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}\n    .modal .grid .full{grid-column:1/-1}\n    .modal footer{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}\n    @media (max-width: 980px){\n      .layout{grid-template-columns:1fr}\n      aside{position:relative;height:auto}\n      .cards{grid-template-columns:1fr}\n    }\n  </style>\n</head>\n<body>\n<div class=\"layout\">\n  <aside>\n    <div class=\"brand\">\n      <span class=\"dot\"></span>\n      <h1>Finanzas (n8n + Postgres)</h1>\n    </div>\n\n    <div class=\"panel\">\n      <label>Filtro por fechas</label>\n      <div class=\"row\">\n        <div>\n          <label>Desde</label>\n          <input type=\"date\" id=\"from\">\n        </div>\n        <div>\n          <label>Hasta</label>\n          <input type=\"date\" id=\"to\">\n        </div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <label>Últimos registros</label>\n      <select id=\"limit\">\n        <option value=\"20\">20</option>\n        <option value=\"50\" selected>50</option>\n        <option value=\"100\">100</option>\n        <option value=\"200\">200</option>\n      </select>\n    </div>\n\n    <div class=\"panel\">\n      <button id=\"apply\">Aplicar filtros</button>\n      <div style=\"height:10px\"></div>\n      <button class=\"ghost\" id=\"clear\">Limpiar filtros</button>\n      <div style=\"height:10px\"></div>\n      <button class=\"secondary\" id=\"refresh\">Recalcular</button>\n      <div style=\"height:10px\"></div>\n      <small class=\"muted\">Tip: al editar o borrar, se refresca todo automáticamente.</small>\n    </div>\n  </aside>\n\n  <main>\n    <div class=\"top\">\n      <h2>Dashboard de Finanzas</h2>\n      <div class=\"muted\" id=\"status\">Listo</div>\n    </div>\n\n    <section class=\"cards\">\n      <div class=\"card\">\n        <small>Ingresos</small>\n        <b id=\"sumIn\">$0</b>\n      </div>\n      <div class=\"card\">\n        <small>Gastos</small>\n        <b id=\"sumOut\">$0</b>\n      </div>\n      <div class=\"card\">\n        <small>Balance</small>\n        <b id=\"sumBal\">$0</b>\n      </div>\n    </section>\n\n    <h3 style=\"margin:16px 0 10px 0\">Registros</h3>\n    <div class=\"tableWrap\">\n      <table>\n        <thead>\n          <tr>\n            <th style=\"width:140px\">Fecha</th>\n            <th>Descripción</th>\n            <th class=\"right\" style=\"width:160px\">Valor</th>\n            <th style=\"width:140px\">Categoría</th>\n            <th style=\"width:160px\">Acciones</th>\n          </tr>\n        </thead>\n        <tbody id=\"tbody\">\n          <tr><td colspan=\"5\" class=\"muted\">Cargando...</td></tr>\n        </tbody>\n      </table>\n    </div>\n  </main>\n</div>\n\n<div class=\"toast\" id=\"toast\"></div>\n\n<div class=\"modalBack\" id=\"modalBack\">\n  <div class=\"modal\">\n    <h3>Editar registro</h3>\n    <div class=\"grid\">\n      <div>\n        <label>Fecha</label>\n        <input type=\"date\" id=\"m_fecha\">\n      </div>\n      <div>\n        <label>Monto</label>\n        <input type=\"number\" step=\"0.01\" id=\"m_monto\">\n      </div>\n      <div class=\"full\">\n        <label>Descripción</label>\n        <input type=\"text\" id=\"m_desc\" placeholder=\"...\">\n      </div>\n      <div class=\"full muted\" id=\"m_meta\" style=\"font-size:12px\"></div>\n    </div>\n    <footer>\n      <button class=\"ghost\" id=\"m_cancel\">Cancelar</button>\n      <button id=\"m_save\">Guardar</button>\n    </footer>\n  </div>\n</div>\n\n<script>\n  const API_BASE = '/webhook';\n  const ENDPOINTS = {\n    summary: API_BASE + '/api/summary',\n    records: API_BASE + '/api/records',\n    update:  API_BASE + '/api/update',\n    del:     API_BASE + '/api/delete',\n  };\n\n  const els = {\n    from: document.getElementById('from'),\n    to: document.getElementById('to'),\n    limit: document.getElementById('limit'),\n    apply: document.getElementById('apply'),\n    clear: document.getElementById('clear'),\n    refresh: document.getElementById('refresh'),\n    sumIn: document.getElementById('sumIn'),\n    sumOut: document.getElementById('sumOut'),\n    sumBal: document.getElementById('sumBal'),\n    tbody: document.getElementById('tbody'),\n    status: document.getElementById('status'),\n    toast: document.getElementById('toast'),\n    modalBack: document.getElementById('modalBack'),\n    m_fecha: document.getElementById('m_fecha'),\n    m_monto: document.getElementById('m_monto'),\n    m_desc: document.getElementById('m_desc'),\n    m_meta: document.getElementById('m_meta'),\n    m_cancel: document.getElementById('m_cancel'),\n    m_save: document.getElementById('m_save'),\n  };\n\n  let currentEdit = null;\n\n  function money(n){\n    const v = Number(n || 0);\n    return v.toLocaleString('es-EC', { style:'currency', currency:'USD', maximumFractionDigits: 2 });\n  }\n\n  function qs(){\n    const p = new URLSearchParams();\n    if (els.from.value) p.set('from', els.from.value);\n    if (els.to.value) p.set('to', els.to.value);\n    p.set('limit', els.limit.value || '50');\n    return p.toString();\n  }\n\n  function setStatus(msg){ els.status.textContent = msg; }\n\n  function toast(msg){\n    els.toast.textContent = msg;\n    els.toast.style.display = 'block';\n    setTimeout(()=> els.toast.style.display='none', 2200);\n  }\n\n  async function fetchJSON(url, opts){\n    const res = await fetch(url, opts);\n    if(!res.ok){\n      const t = await res.text().catch(()=> '');\n      throw new Error(`HTTP ${res.status}: ${t || 'Error'}`);\n    }\n    return res.json();\n  }\n\n  async function loadSummary(){\n    const data = await fetchJSON(`${ENDPOINTS.summary}?${qs()}`);\n    els.sumIn.textContent = money(data.ingresos);\n    els.sumOut.textContent = money(data.gastos);\n    els.sumBal.textContent = money(data.balance);\n  }\n\n  function badge(tipo){\n    if(tipo === 'ingresos') return `<span class=\"badge in\">Ingreso</span>`;\n    return `<span class=\"badge out\">Gasto</span>`;\n  }\n\n  function rowHTML(r){\n    const safeDesc = (r.descripcion ?? '').toString()\n      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');\n    return `\n      <tr>\n        <td>${(r.fecha ?? '').toString().slice(0,10)}</td>\n        <td>${safeDesc}</td>\n        <td class=\"right\">${money(r.monto)}</td>\n        <td>${badge(r.tipo)}</td>\n        <td>\n          <div class=\"actions\">\n            <button class=\"btn\" data-act=\"edit\" data-tipo=\"${r.tipo}\" data-id=\"${r.id}\"\n              data-fecha=\"${(r.fecha ?? '').toString().slice(0,10)}\"\n              data-desc=\"${encodeURIComponent(r.descripcion ?? '')}\"\n              data-monto=\"${r.monto}\">\n              Editar\n            </button>\n            <button class=\"btn danger\" data-act=\"del\" data-tipo=\"${r.tipo}\" data-id=\"${r.id}\">\n              Borrar\n            </button>\n          </div>\n        </td>\n      </tr>\n    `;\n  }\n\n  async function loadRecords(){\n    const list = await fetchJSON(`${ENDPOINTS.records}?${qs()}`);\n    if(!Array.isArray(list) || list.length === 0){\n      els.tbody.innerHTML = `<tr><td colspan=\"5\" class=\"muted\">No hay registros con ese filtro.</td></tr>`;\n      return;\n    }\n    els.tbody.innerHTML = list.map(rowHTML).join('');\n  }\n\n  async function refreshAll(){\n    try{\n      setStatus('Actualizando...');\n      await Promise.all([loadSummary(), loadRecords()]);\n      setStatus('Listo');\n    }catch(e){\n      console.error(e);\n      setStatus('Error');\n      toast('Error: ' + (e.message || e));\n    }\n  }\n\n  function openModal(data){\n    currentEdit = data;\n    els.m_fecha.value = data.fecha || '';\n    els.m_desc.value = data.descripcion || '';\n    els.m_monto.value = data.monto ?? '';\n    els.m_meta.textContent = `Tipo: ${data.tipo} | ID: ${data.id}`;\n    els.modalBack.style.display = 'flex';\n  }\n  function closeModal(){\n    els.modalBack.style.display = 'none';\n    currentEdit = null;\n  }\n\n  els.tbody.addEventListener('click', async (ev)=>{\n    const btn = ev.target.closest('button[data-act]');\n    if(!btn) return;\n\n    const act = btn.dataset.act;\n    const tipo = btn.dataset.tipo;\n    const id = Number(btn.dataset.id);\n\n    if(act === 'edit'){\n      openModal({\n        tipo, id,\n        fecha: btn.dataset.fecha,\n        descripcion: decodeURIComponent(btn.dataset.desc || ''),\n        monto: Number(btn.dataset.monto || 0),\n      });\n    }\n\n    if(act === 'del'){\n      if(!confirm('¿Seguro que deseas borrar este registro?')) return;\n      try{\n        setStatus('Borrando...');\n        await fetchJSON(ENDPOINTS.del, {\n          method:'POST',\n          headers:{'Content-Type':'application/json'},\n          body: JSON.stringify({ tipo, id }),\n        });\n        toast('Registro eliminado');\n        await refreshAll();\n      }catch(e){\n        console.error(e);\n        toast('Error al borrar: ' + (e.message || e));\n        setStatus('Error');\n      }\n    }\n  });\n\n  els.m_cancel.addEventListener('click', closeModal);\n  els.modalBack.addEventListener('click', (e)=>{ if(e.target === els.modalBack) closeModal(); });\n\n  els.m_save.addEventListener('click', async ()=>{\n    if(!currentEdit) return;\n    const payload = {\n      tipo: currentEdit.tipo,\n      id: currentEdit.id,\n      fecha: els.m_fecha.value,\n      descripcion: els.m_desc.value,\n      monto: Number(els.m_monto.value),\n    };\n    if(!payload.fecha || !payload.descripcion || !Number.isFinite(payload.monto)){\n      toast('Completa fecha/descripcion/monto');\n      return;\n    }\n    try{\n      setStatus('Guardando...');\n      await fetchJSON(ENDPOINTS.update, {\n        method:'POST',\n        headers:{'Content-Type':'application/json'},\n        body: JSON.stringify(payload),\n      });\n      toast('Registro actualizado');\n      closeModal();\n      await refreshAll();\n    }catch(e){\n      console.error(e);\n      toast('Error al guardar: ' + (e.message || e));\n      setStatus('Error');\n    }\n  });\n\n  els.apply.addEventListener('click', refreshAll);\n  els.refresh.addEventListener('click', refreshAll);\n  els.clear.addEventListener('click', ()=>{\n    els.from.value = '';\n    els.to.value = '';\n    els.limit.value = '50';\n    refreshAll();\n  });\n\n  refreshAll();\n</script>\n</body>\n</html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetHTML",
+      "name": "SET - HTML",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        460,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseBody": "={{$json.html}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondHTML",
+      "name": "RESPOND - HTML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "api/summary",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "WebhookSummary",
+      "name": "WEBHOOK - API Summary",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH params AS (\n  SELECT\n    NULLIF($1,'')::date AS date_from,\n    NULLIF($2,'')::date AS date_to\n),\ning AS (\n  SELECT COALESCE(SUM(i.monto),0) AS total\n  FROM ingresos i, params p\n  WHERE (p.date_from IS NULL OR i.fecha >= p.date_from)\n    AND (p.date_to   IS NULL OR i.fecha <= p.date_to)\n),\ngas AS (\n  SELECT COALESCE(SUM(g.monto),0) AS total\n  FROM gastos g, params p\n  WHERE (p.date_from IS NULL OR g.fecha >= p.date_from)\n    AND (p.date_to   IS NULL OR g.fecha <= p.date_to)\n)\nSELECT\n  (SELECT total FROM ing) AS ingresos,\n  (SELECT total FROM gas) AS gastos,\n  (SELECT total FROM ing) - (SELECT total FROM gas) AS balance;",
+        "additionalFields": {
+          "queryParams": "={{[$json.query.from || \"\", $json.query.to || \"\"]}}"
+        }
+      },
+      "id": "PGSummary",
+      "name": "PG - Summary",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        460,
+        -260
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "Postgres Docker",
+          "id": "1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "firstEntryJson",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondSummary",
+      "name": "RESPOND - Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "api/records",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "WebhookRecords",
+      "name": "WEBHOOK - API Records",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH params AS (\n  SELECT\n    NULLIF($1,'')::date AS date_from,\n    NULLIF($2,'')::date AS date_to,\n    GREATEST(COALESCE(NULLIF($3,'')::int, 50), 1) AS lim\n)\nSELECT *\nFROM (\n  SELECT\n    i.id,\n    i.fecha,\n    i.descripcion,\n    i.monto,\n    'ingresos'::text AS tipo,\n    'Ingreso'::text  AS categoria\n  FROM ingresos i, params p\n  WHERE (p.date_from IS NULL OR i.fecha >= p.date_from)\n    AND (p.date_to   IS NULL OR i.fecha <= p.date_to)\n\n  UNION ALL\n\n  SELECT\n    g.id,\n    g.fecha,\n    g.descripcion,\n    g.monto,\n    'gastos'::text AS tipo,\n    'Gasto'::text  AS categoria\n  FROM gastos g, params p\n  WHERE (p.date_from IS NULL OR g.fecha >= p.date_from)\n    AND (p.date_to   IS NULL OR g.fecha <= p.date_to)\n) t, params p\nORDER BY t.fecha DESC, t.id DESC\nLIMIT p.lim;",
+        "additionalFields": {
+          "queryParams": "={{[$json.query.from || \"\", $json.query.to || \"\", $json.query.limit || \"50\"]}}"
+        }
+      },
+      "id": "PGRecords",
+      "name": "PG - Records",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        460,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "Postgres Docker",
+          "id": "1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "allEntries",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondRecords",
+      "name": "RESPOND - Records",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "WebhookUpdate",
+      "name": "WEBHOOK - API Update",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "operation": "equal",
+              "value1": "={{$json.body.tipo}}",
+              "value2": "ingresos"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{$json.body.tipo}}",
+              "value2": "gastos"
+            }
+          ]
+        }
+      },
+      "id": "SwitchUpdateTipo",
+      "name": "SWITCH - Update tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [
+        460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE ingresos\nSET\n  fecha = $1::date,\n  descripcion = $2::text,\n  monto = $3::numeric\nWHERE id = $4::bigint\nRETURNING id, fecha, descripcion, monto;",
+        "additionalFields": {
+          "queryParams": "={{[$json.body.fecha, $json.body.descripcion, $json.body.monto, $json.body.id]}}"
+        }
+      },
+      "id": "PGUpdateIngresos",
+      "name": "PG - Update ingresos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        720,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "Postgres Docker",
+          "id": "1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE gastos\nSET\n  fecha = $1::date,\n  descripcion = $2::text,\n  monto = $3::numeric\nWHERE id = $4::bigint\nRETURNING id, fecha, descripcion, monto;",
+        "additionalFields": {
+          "queryParams": "={{[$json.body.fecha, $json.body.descripcion, $json.body.monto, $json.body.id]}}"
+        }
+      },
+      "id": "PGUpdateGastos",
+      "name": "PG - Update gastos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        720,
+        320
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "Postgres Docker",
+          "id": "1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "firstEntryJson",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondUpdateOK",
+      "name": "RESPOND - Update OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        980,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "responseCode": 400,
+        "responseBody": "{\"error\":\"tipo inválido. Usa 'ingresos' o 'gastos'.\"}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondUpdateBad",
+      "name": "RESPOND - Update BAD",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "WebhookDelete",
+      "name": "WEBHOOK - API Delete",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "operation": "equal",
+              "value1": "={{$json.body.tipo}}",
+              "value2": "ingresos"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{$json.body.tipo}}",
+              "value2": "gastos"
+            }
+          ]
+        }
+      },
+      "id": "SwitchDeleteTipo",
+      "name": "SWITCH - Delete tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM ingresos\nWHERE id = $1::bigint\nRETURNING id;",
+        "additionalFields": {
+          "queryParams": "={{[$json.body.id]}}"
+        }
+      },
+      "id": "PGDeleteIngresos",
+      "name": "PG - Delete ingresos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        720,
+        500
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "Postgres Docker",
+          "id": "1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM gastos\nWHERE id = $1::bigint\nRETURNING id;",
+        "additionalFields": {
+          "queryParams": "={{[$json.body.id]}}"
+        }
+      },
+      "id": "PGDeleteGastos",
+      "name": "PG - Delete gastos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        720,
+        620
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "Postgres Docker",
+          "id": "1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "firstEntryJson",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondDeleteOK",
+      "name": "RESPOND - Delete OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        980,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "responseCode": 400,
+        "responseBody": "{\"error\":\"tipo inválido. Usa 'ingresos' o 'gastos'.\"}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "RespondDeleteBad",
+      "name": "RESPOND - Delete BAD",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        740
+      ]
+    }
+  ],
+  "connections": {
+    "WEBHOOK - Dashboard HTML": {
+      "main": [
+        [
+          {
+            "node": "SET - HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET - HTML": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WEBHOOK - API Summary": {
+      "main": [
+        [
+          {
+            "node": "PG - Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG - Summary": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WEBHOOK - API Records": {
+      "main": [
+        [
+          {
+            "node": "PG - Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG - Records": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WEBHOOK - API Update": {
+      "main": [
+        [
+          {
+            "node": "SWITCH - Update tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SWITCH - Update tipo": {
+      "main": [
+        [
+          {
+            "node": "PG - Update ingresos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PG - Update gastos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG - Update ingresos": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - Update OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG - Update gastos": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - Update OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SWITCH - Update tipo (fallback)": {
+      "main": []
+    },
+    "WEBHOOK - API Delete": {
+      "main": [
+        [
+          {
+            "node": "SWITCH - Delete tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SWITCH - Delete tipo": {
+      "main": [
+        [
+          {
+            "node": "PG - Delete ingresos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PG - Delete gastos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG - Delete ingresos": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - Delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG - Delete gastos": {
+      "main": [
+        [
+          {
+            "node": "RESPOND - Delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}
